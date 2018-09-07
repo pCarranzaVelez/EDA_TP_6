@@ -75,9 +75,30 @@ receiveMessage(bool * value)
 		*value = true;
 		cout << "Got a message:" << endl;
 		cout << endl << buf << endl;
-		if (buf[0] == 'e' && buf[1] == 'x' && buf[2] == 'i' && buf[3] == 't')
+		if (searchClrf(buf))	//si tiene los 3 CRLF esperados sigue parseando
 		{
-			*value = false;
+			if (parseFirstLine())	//se fija que la primera linea este en el formato esperado
+			{
+				if (parse2ndLine())		//se fija que la primera linea este en el formato esperado
+				{
+					isFilePresent();	//si estaba en el formato correcto busca el archivo solicitado y le contesta al cliente
+				}
+				else	//si no vino en el formato esperado lo ignora
+				{
+					cout << err.detail;
+					err.type = NO_SERVER_ERR;
+				}
+			}
+			else	//si no vino en el formato esperado lo ignora
+			{
+				cout << err.detail;
+				err.type = NO_SERVER_ERR;
+			}
+		}
+		else	//si no vino en el formato esperado lo ignora
+		{
+			cout << err.detail;	
+			err.type = NO_SERVER_ERR;
 		}
 	}
 	else
@@ -87,7 +108,82 @@ receiveMessage(bool * value)
 	}
 }
 
+bool server::
+searchCrlf(char buf[])
+{
+	int i = 0;
+	bool ret = false;
+	while ((buf[i] != CR) && (buf[i] != '\0'))	//busca carriage return, pero termina tambien si encuentra el terminador, con error
+	{
+		firstLine += buf[i++];
+	}
+	if ((buf[i] == CR) && (buf[i+1] == LF))
+	{
+		i++;
+		while ((buf[i] != CR) && (buf[i] != '\0'))	//busca carriage return, pero termina tambien si encuentra el terminador, con error
+		{
+			secondLine += buf[i++];
+		}
+		if( (buf[i] == CR) && (buf[i+1] == LF) && (buf[i+2] == CR) && (buf[i + 3] == LF))
+		{
+			ret = true;
+		}
+		else
+		{
+			err.type = WRONG_CRLF_FORMAT;
+			err.detail = "No se encontro la secuencia esperada de CRLF en la segunda linea";
+		}
 
+	}
+	else
+	{
+		err.type = WRONG_CRLF_FORMAT;
+		err.detail = "No se encontro la secuencia esperada de CRLF en la primera linea";
+	}
+	return ret;
+}
+
+bool server::
+parseFirstLine()
+{
+	bool ret = false;
+	if (!firstLine.compare(0, strlen("GET "), "GET "))
+	{
+		firstLine.erase(0, strlen("GET "));
+		if (!firstLine.compare(firstLine.length() - strlen(" HTTP/1.1"), strlen(" HTTP/1.1"), " HTTP/1.1"))	//solo sirve si hay un espacio entre el path y HTTP...
+		{
+			firstLine.erase(firstLine.length() - strlen(" HTTP/1.1"), strlen(" HTTP/1.1"));	//limpia el string y le deja solo el path
+			if (firstLine[0] == '/')
+			{
+				ret = true;
+			}
+		}
+	}
+	return ret;
+}
+
+bool server::
+parse2ndLine()
+{
+	bool ret = false;
+	if (!secondLine.compare(0, strlen("Host: "), "Host: "))	//solo sirve si mandan con espacio despues de host:
+	{
+		secondLine.erase(0, strlen("Host: "));	
+		if (!secondLine.compare("127.0.0.1") || !secondLine.compare("localhost"))	//solo sirve si hay un espacio entre el path y HTTP...
+		{
+			if (firstLine[0] == '/')
+			{
+				ret = true;
+			}
+		}
+	}
+}
+
+void server::
+isFilePresent()
+{
+
+}
 
 server::
 server()
@@ -108,3 +204,4 @@ server::
 	delete socket_forServer;
 	delete IO_handler;
 }
+

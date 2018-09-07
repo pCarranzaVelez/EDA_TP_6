@@ -29,7 +29,6 @@ public:
 	client();
 	bool startConnection(const char* host);
 	bool receiveMessage();
-	void getPathAndHost(char buf[]);
 	void messageToServer();
 	void messageToServer(const char msg[MSGSIZE]);
 	~client();
@@ -43,5 +42,7 @@ private:
 	string path;
 	string serverMessage;
 	clientError err;
+	void info2ServerMessage();
+	void getPathAndHost(char buf[]);
 };
 

@@ -87,29 +87,21 @@ messageToServer()
 
 	//lo que haya en buf lo parsea y lo mete en host y path
 	getPathAndHost(buf);
-	//if(err.)
-	//mete todo en messageToServer
-	cout << "Probando parser" << endl;
-	cout << "Path: " << path << endl;
-	cout << "Host: " << host << endl;
-	serverMessage = "GET " + path + " HTTP/1.1 ";
-	serverMessage += CR;
-	serverMessage += LF;
-	serverMessage += "Host: " + host;
-	serverMessage += CR;
-	serverMessage += LF;
-	serverMessage += CR;
-	serverMessage += LF;
-	cout << "serverMessage " << serverMessage.c_str() << endl;
-	//le manda al server
-	
-	do
+	if (err.type != NO_ERR)
 	{
-		len = socket_forClient->write_some(boost::asio::buffer(serverMessage.c_str(), serverMessage.length()), error);
-		//len = socket_forClient->write_some(boost::asio::buffer(buf, strlen(buf)), error);
-	} while ((error.value() == WSAEWOULDBLOCK));
-	if (error)
-		cout << "Error while trying to connect to server " << error.message() << endl;
+		cout << err.detail << endl;
+		err.type = NO_ERR;	//ya se leyo el error
+	}
+	else
+	{
+		info2ServerMessage();	//mete lo recibido del usuario en messageToServer con el formato que espera el server
+		do
+		{
+			len = socket_forClient->write_some(boost::asio::buffer(serverMessage.c_str(), serverMessage.length()), error);
+		} while ((error.value() == WSAEWOULDBLOCK));
+		if (error)
+			cout << "Error while trying to connect to server " << error.message() << endl;
+	}
 }
 
 void client::
@@ -135,7 +127,7 @@ getPathAndHost(char buf[])
 	{
 		host += buf[i++];
 	}
-	if (i == MSGSIZE)
+	if (i == MSGSIZE)	//si no encontro '/' es error
 	{
 		err.type = NO_SLASH;
 		err.detail = "No se recibio ningun caracter '/', ingrese localhost/path/filename\n";
@@ -147,4 +139,17 @@ getPathAndHost(char buf[])
 			path += buf[i++];
 		}
 	}
+}
+
+void client::
+info2ServerMessage()
+{
+	serverMessage = "GET " + path + " HTTP/1.1 "; //mete lo recibido del usuario en messageToServer con el formato que espera el server
+	serverMessage += CR;
+	serverMessage += LF;
+	serverMessage += "Host: " + host;
+	serverMessage += CR;
+	serverMessage += LF;
+	serverMessage += CR;
+	serverMessage += LF;
 }

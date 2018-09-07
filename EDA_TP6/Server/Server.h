@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cstdio>
 #include <cstring>
+#include <string>
 #include <boost/asio.hpp>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
@@ -34,4 +35,10 @@ private:
 	boost::asio::io_service*  IO_handler;
 	boost::asio::ip::tcp::socket* socket_forServer;
 	boost::asio::ip::tcp::acceptor* server_acceptor;
+	string firstLine;
+	string secondLine;
+	bool searchCrlf(char buf[]);
+	void isFilePresent();
+	bool parse2ndLine();
+	bool parseFirstLine();
 };
