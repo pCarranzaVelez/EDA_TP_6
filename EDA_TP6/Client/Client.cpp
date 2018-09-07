@@ -83,11 +83,30 @@ messageToServer()
 	char buf[MSGSIZE];
 	size_t len = 0;
 	cout << "Write your message:" << endl;
-	cin >> buf;
+	cin.getline(buf,sizeof(buf));
 
+	//lo que haya en buf lo parsea y lo mete en host y path
+	getPathAndHost(buf);
+	//if(err.)
+	//mete todo en messageToServer
+	cout << "Probando parser" << endl;
+	cout << "Path: " << path << endl;
+	cout << "Host: " << host << endl;
+	serverMessage = "GET " + path + " HTTP/1.1 ";
+	serverMessage += CR;
+	serverMessage += LF;
+	serverMessage += "Host: " + host;
+	serverMessage += CR;
+	serverMessage += LF;
+	serverMessage += CR;
+	serverMessage += LF;
+	cout << "serverMessage " << serverMessage.c_str() << endl;
+	//le manda al server
+	
 	do
 	{
-		len = socket_forClient->write_some(boost::asio::buffer(buf, strlen(buf)), error);
+		len = socket_forClient->write_some(boost::asio::buffer(serverMessage.c_str(), serverMessage.length()), error);
+		//len = socket_forClient->write_some(boost::asio::buffer(buf, strlen(buf)), error);
 	} while ((error.value() == WSAEWOULDBLOCK));
 	if (error)
 		cout << "Error while trying to connect to server " << error.message() << endl;
@@ -105,4 +124,27 @@ messageToServer(const char msg[MSGSIZE])
 	} while ((error.value() == WSAEWOULDBLOCK));
 	if (error)
 		cout << "Error while trying to connect to server " << error.message() << endl;
+}
+
+
+void client::
+getPathAndHost(char buf[])
+{
+	int i = 0;
+	while( (buf[i] != '/') && (i<MSGSIZE))	//hasta la primera barra es el host
+	{
+		host += buf[i++];
+	}
+	if (i == MSGSIZE)
+	{
+		err.type = NO_SLASH;
+		err.detail = "No se recibio ningun caracter '/', ingrese localhost/path/filename\n";
+	}
+	else
+	{
+		while ((buf[i] != '\0') && (i < MSGSIZE))	//todo lo que venga despues se considera como path 
+		{
+			path += buf[i++];
+		}
+	}
 }

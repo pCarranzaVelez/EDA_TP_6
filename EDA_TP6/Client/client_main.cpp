@@ -13,7 +13,6 @@ main(int argc, char* argv[])
 		conquering.messageToServer();
 		cout << endl;
 		exit = conquering.receiveMessage();
-
 	} while (!(exit));
 
 	return 0;
