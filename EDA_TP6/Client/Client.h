@@ -5,8 +5,13 @@
 #include <boost/chrono.hpp>
 #include <boost/timer/timer.hpp>
 
-#define HELLO_PORT_STR "50013"
+#define HELLO_PORT_STR "80"
 #define SERVER_IP "localhost"
+
+#define MSGSIZE 512
+
+#define LF 0x0A
+#define CR 0x0D
 
 using namespace std;
 
@@ -14,8 +19,10 @@ class client
 {
 public:
 	client();
-	void startConnection(const char* host);
-	void receiveMessage();
+	bool startConnection(const char* host);
+	bool receiveMessage();
+	void messageToServer();
+	void messageToServer(const char msg[MSGSIZE]);
 	~client();
 
 private:
