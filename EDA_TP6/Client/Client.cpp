@@ -47,11 +47,12 @@ receiveMessage()
 	t.start();
 	boost::timer::cpu_times pastTime = t.elapsed();
 	double elapsedSeconds = 0.0;
-
+	//messageFromServer = "";
 	do
 	{
 		len = socket_forClient->read_some(boost::asio::buffer(buf), error);
-
+		//messageFromServer += buf;
+		//vaciar el buffer
 		if (!error)
 			buf[len] = '\0';
 

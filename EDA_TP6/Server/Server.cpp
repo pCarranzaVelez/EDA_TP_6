@@ -337,6 +337,7 @@ sendSuccessMessage(FILE * htmlFile)	//envía el mensaje de éxito al client
 	} while ((error.value() == WSAEWOULDBLOCK));
 	if (error)
 		cout << "Error while trying to send message to client. " << error.message() << endl;
+
 }
 
 void server::
@@ -420,6 +421,15 @@ infoSuccessClientMessage(FILE *htmlFile)
 	answerMessage += LF;
 
 	//contenido del archivo
+	string fileContent = "";
+	while (!feof(htmlFile))
+	{
+		fileContent += getFileLine(htmlFile);
+	}
+	answerMessage += fileContent;
+	answerMessage += CR;
+	answerMessage += LF;
+
 }
 
 void server::
@@ -441,6 +451,27 @@ infoFailClientMessage()
 	answerMessage += CR;
 	answerMessage += LF;
 
+}
+
+string server::
+getFileLine(FILE *htmlFile) //devuelve una linea de un archivo de texto
+{
+	char *buff = (char *)malloc(100 * sizeof(char));   //asumo que las lineas no se pasan de los 100 caracteres
+	buff[0] = '0';				//despejar posible error	
+	int i = 0;
+	while (buff[i] != '\n' || buff[i] != '\r' || buff[i] != EOF)
+	{
+		buff[i] = fgetc(htmlFile);
+		i++;
+	}
+	
+	buff[++i] = '\r';
+	buff[++i] = '\n';
+	buff[++i] = '\0';
+
+	string file_line(buff);
+	free(buff);			//libero el buffer
+	return file_line;
 }
 
 server::

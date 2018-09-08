@@ -35,6 +35,7 @@ typedef struct
 	string detail;
 }serverError;
 
+
 class server
 {
 public:
@@ -71,6 +72,7 @@ private:
 	void sendFailMessage();
 	string contentLength(FILE *htmlFile);
 	string getCurrentDate(int state);
+	string getFileLine(FILE *htmlFile);
 	void infoSuccessClientMessage(FILE *htmlFile);
 	void infoFailClientMessage();
 };

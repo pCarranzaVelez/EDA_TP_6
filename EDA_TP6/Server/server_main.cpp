@@ -17,10 +17,8 @@ main(int argc, char* argv[])
 			conquering.sendMessage("Message received");
 		else
 			conquering.sendMessage((conquering.getError()).detail.c_str());
-		
 	} while (value);
 	conquering.sendMessage("exit");
-	conquering.sendMessage("Server timed out");
 
 	Sleep(50); // Le damos 50ms para que llegue el mensaje antes de cerrar el socket.
 

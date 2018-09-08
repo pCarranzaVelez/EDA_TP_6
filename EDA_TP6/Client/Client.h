@@ -41,6 +41,7 @@ private:
 	string host;
 	string path;
 	string serverMessage;
+	string messageFromServer;
 	clientError err;
 	void info2ServerMessage();
 	void getPathAndHost(char buf[]);
