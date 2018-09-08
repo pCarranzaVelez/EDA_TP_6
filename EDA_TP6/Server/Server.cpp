@@ -306,70 +306,122 @@ parse2ndLine()
 }
 
 void server::
-isFilePresent()
+isFilePresent()	//se fija si existe el archivo y envía mensaje al client dependiendo del resultado de búsqueda
 {
 	FILE * htmlFile;
 	htmlFile = fopen(path.c_str(), "rb");
 	if(htmlFile != NULL)	//se encontró el archivo solicitado 
 	{
-		sendSuccessMessage(htmlFile);	//envió mensaje al client 
+		sendSuccessMessage(htmlFile);	//envía mensaje de éxito al client
 		fclose(htmlFile);
 	}
 	else
 	{
-		sendFailMessage();
+		sendFailMessage();	//envía mensaje de error al client
 	}
 }
 
 void server::
-sendSuccessMessage(FILE * htmlFile)
+sendSuccessMessage(FILE * htmlFile)	//envía el mensaje de éxito al client
 {
+	infoSuccessClientMessage(htmlFile);	//crea el mensaje
+
 	boost::system::error_code error;
 	size_t len = 0;
-
-	infoSuccessClientMessage()
 
 	do
 	{
 		len = socket_forServer->write_some(boost::asio::buffer(answerMessage.c_str(), answerMessage.length()), error);
 	} while ((error.value() == WSAEWOULDBLOCK));
 	if (error)
-		cout << "Error while trying to send message. " << error.message() << endl;
+		cout << "Error while trying to send message to client. " << error.message() << endl;
 }
 
 void server::
-sendFailMessage()
+sendFailMessage()	//envía el mensaje de error al client
 {
+	infoFailClientMessage();	//crea el mensaje
 
+	boost::system::error_code error;
+	size_t len = 0;
+
+	do
+	{
+		len = socket_forServer->write_some(boost::asio::buffer(answerMessage.c_str(), answerMessage.length()), error);
+	} while ((error.value() == WSAEWOULDBLOCK));
+	if (error)
+		cout << "Error while trying to send message to client. " << error.message() << endl;
 }
 
-void server::
-addCrLfToString()
-{
-	answerMessage += CR;
-	answerMessage += LF;
-}
-
-void server::
-infoSuccessClientMessage()
+string server::
+contentLength(FILE *htmlFile)	//devuelve el largo del archivo (bytes) en un string
 {
 	fseek(htmlFile, 0, SEEK_END);
 	long int contentLength = ftell(htmlFile);
+	return to_string(contentLength);
+}
 
+string server::
+getCurrentDate()	//devuelve la fecha y hora en el formato pedido (ejemplo: Tue, 04 Sep 2018 18:21:19 GMT)
+{
+	time_t time_;
+	struct tm * timeinfo;
+	char forDate[100];
+
+	time(&time_);
+	timeinfo = localtime(&time_);
+
+	strftime(forDate, 100, "%a, %d %h %Y %X %Z", timeinfo);	
+	return forDate;
+}
+
+void server::
+infoSuccessClientMessage(FILE *htmlFile)
+{
 	answerMessage = "HTTP/1.1 200 OK";
-	addCrLfToString();
-	answerMessage += "Date: " + ;	//
-	addCrLfToString();
+	answerMessage += CR;
+	answerMessage += LF;
+	answerMessage += "Date: " + getCurrentDate();
+	answerMessage += CR;
+	answerMessage += LF;
 	answerMessage += "Location: " + host + path;
-	addCrLfToString();
-	answerMessage += "Cache-Control: max - age = 30";
-	addCrLfToString();
-	answerMessage += "Expires: " + date mas 30;	//
-	addCrLfToString();
-	answerMessage += "Content-Length: " + to_string(;	//
-	addCrLfToString();
+	answerMessage += CR;
+	answerMessage += LF;
+	answerMessage += "Cache-Control: max-age = 30";
+	answerMessage += CR;
+	answerMessage += LF;
+	answerMessage += "Expires: ";// +date mas 30s
+	answerMessage += CR;
+	answerMessage += LF;
+	answerMessage += "Content-Length: " + contentLength(htmlFile);
+	answerMessage += CR;
+	answerMessage += LF;
 	answerMessage += "Content-Type: text/html; charset=iso-8859-1";
-	addCrLfToString();
+	answerMessage += CR;
+	answerMessage += LF;
+
+	//contenido del archivo
+}
+
+void server::
+infoFailClientMessage()
+{
+	answerMessage = "HTTP/1.1 404 Not Found";
+	answerMessage += CR;
+	answerMessage += LF;
+	answerMessage += "Date: " + getCurrentDate();
+	answerMessage += CR;
+	answerMessage += LF;
+	answerMessage += "Cache-Control: max-age = 30";
+	answerMessage += CR;
+	answerMessage += LF;
+	answerMessage += "Expires: ";// +date mas 30s
+	answerMessage += CR;
+	answerMessage += LF;
+	answerMessage += "Content-Length: 0";
+	answerMessage += CR;
+	answerMessage += LF;
+
 }
 
 server::

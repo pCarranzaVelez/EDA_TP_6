@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <ctime>
 #include <boost/asio.hpp>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
@@ -66,6 +67,8 @@ private:
 	bool parse2ndLine();
 	void sendSuccessMessage(FILE * htmlFile);
 	void sendFailMessage();
-	void addCrLfToString();
-	void infoSuccessClientMessage();
+	string contentLength(FILE *htmlFile);
+	string getCurrentDate();
+	void infoSuccessClientMessage(FILE *htmlFile);
+	void infoFailClientMessage();
 };
