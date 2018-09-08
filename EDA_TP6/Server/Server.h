@@ -15,11 +15,20 @@
 
 #define MSGSIZE 512
 #define MAXTIME 20
-
+#define COMMAND_NUM 1	//cantidad de comandos HTTP esperados, si se aumenta, agregar los comandos esperados en server::validCommand()
+#define VERSIONS_NUM 1
 #define LF 0x0A
 #define CR 0x0D
 
 using namespace std;
+
+typedef enum{NO_SERVER_ERR,WRONG_CRLF_FORMAT,INVALID_COMMAND,INVALID_VERSION,WRONG_PATH_FORMAT}servErrType;
+
+typedef struct
+{
+	servErrType type;
+	string detail;
+}serverError;
 
 class server
 {
@@ -37,8 +46,17 @@ private:
 	boost::asio::ip::tcp::acceptor* server_acceptor;
 	string firstLine;
 	string secondLine;
-	bool searchCrlf(char buf[]);
+	string path;
+	string answerMessage;
+	unsigned int commandEnd;
+	unsigned int versionStart;
+	bool validMessage(char buf[]);
+	bool parseFirstLine();
+	bool validCommand();
+	bool validVersion();
 	void isFilePresent();
 	bool parse2ndLine();
-	bool parseFirstLine();
+	void sendSuccessMessage(FILE * htmlFile);
+	void sendFailMessage();
+	serverError err;
 };

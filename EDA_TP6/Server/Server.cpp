@@ -75,7 +75,7 @@ receiveMessage(bool * value)
 		*value = true;
 		cout << "Got a message:" << endl;
 		cout << endl << buf << endl;
-		if (searchClrf(buf))	//si tiene los 3 CRLF esperados sigue parseando
+		if (validMessage(buf))	//si tiene los 3 CRLF esperados sigue parseando
 		{
 			if (parseFirstLine())	//se fija que la primera linea este en el formato esperado
 			{
@@ -108,32 +108,35 @@ receiveMessage(bool * value)
 	}
 }
 
+/*validMessage: se fija que la primera linea termine con CRLF y la segunda con doble CRLF
+Si es asi, ignora todo lo que haya despues del tercer CRLF, devuelve true y queda almacenada
+en firstLine la primera linea sin el CRLF y secondLine la segunda sin los CRLF
+En caso de no cumplirse lo dicho arriba devuelve false*/
 bool server::
-searchCrlf(char buf[])
+validMessage(char buf[])
 {
 	int i = 0;
 	bool ret = false;
-	while ((buf[i] != CR) && (buf[i] != '\0'))	//busca carriage return, pero termina tambien si encuentra el terminador, con error
+	while ((buf[i] != CR) && (buf[i] != '\0'))	//busca carriage return o el terminador, en ese caso error
 	{
 		firstLine += buf[i++];
 	}
-	if ((buf[i] == CR) && (buf[i+1] == LF))
+	if ((buf[i] == CR) && (buf[i+1] == LF))	//si la linea termino con CRLF continua
 	{
 		i++;
 		while ((buf[i] != CR) && (buf[i] != '\0'))	//busca carriage return, pero termina tambien si encuentra el terminador, con error
 		{
-			secondLine += buf[i++];
+			secondLine += buf[i++]; 
 		}
-		if( (buf[i] == CR) && (buf[i+1] == LF) && (buf[i+2] == CR) && (buf[i + 3] == LF))
+		if( (buf[i] == CR) && (buf[i+1] == LF) && (buf[i+2] == CR) && (buf[i + 3] == LF))	//si enuentra dos CRLF seguidos termina con exito el mensaje, sino error
 		{
 			ret = true;
 		}
 		else
 		{
 			err.type = WRONG_CRLF_FORMAT;
-			err.detail = "No se encontro la secuencia esperada de CRLF en la segunda linea";
+			err.detail = "No se encontro el doble CRLF esperado al terminar la segunda linea";
 		}
-
 	}
 	else
 	{
@@ -147,16 +150,73 @@ bool server::
 parseFirstLine()
 {
 	bool ret = false;
-	if (!firstLine.compare(0, strlen("GET "), "GET "))
+	if (validCommand() && validVersion())	//se fija que se hayan enviado tanto un comando como una version de HTTP validos
 	{
-		firstLine.erase(0, strlen("GET "));
-		if (!firstLine.compare(firstLine.length() - strlen(" HTTP/1.1"), strlen(" HTTP/1.1"), " HTTP/1.1"))	//solo sirve si hay un espacio entre el path y HTTP...
+		while (firstLine[++commandEnd] == ' ');		//saltea los espacios hasta el principio del path
+		while (firstLine[--versionStart] == ' ');		//saltea los espacios entre el final del filename y la version
+		if (firstLine[commandEnd] == '/')
 		{
-			firstLine.erase(firstLine.length() - strlen(" HTTP/1.1"), strlen(" HTTP/1.1"));	//limpia el string y le deja solo el path
-			if (firstLine[0] == '/')
-			{
-				ret = true;
-			}
+			ret = true;
+			path = firstLine.substr(commandEnd, versionStart); //si arranca con '/' guarda el path, desde donde terminan los espacios despues del comando, hasta donde arrancan los espacios antes de la version
+		}
+		else
+		{
+			err.type = WRONG_PATH_FORMAT;
+			err.detail = "El path no comienza con '/'";
+		}
+	}
+	return ret;
+}
+
+/*Se fija que el principio de firstLine sea un comando esperado de HTTP*/
+bool server::
+validCommand()
+{
+	const char *commands[COMMAND_NUM] = { "GET" };	//la idea es que si mas adelante se agregan mas comandos sea mas facil
+	bool ret = false;
+	for (int i = 0; (i < COMMAND_NUM) && !ret; i++)
+	{
+		if (!firstLine.compare(0,strlen(commands[i]),commands[i]))	//si la primera parte de la linea coincide con alguno de los comandos
+		{
+			ret = true;
+			commandEnd = strlen(commands[i]);	//guarda la posicion donde termina el comando para mas adelante
+		}
+	}
+	if (!ret)	//si no se encontro ninguno de los comandos
+	{
+		err.type = INVALID_COMMAND;
+		err.detail = "No se encontro ningun comando HTTP esperado, los esperados son:\n";
+		for (int i = 0; i < COMMAND_NUM; i++)
+		{
+			err.detail += ' ';
+			err.detail += commands[i];
+		}
+	}
+	return ret;
+}
+
+/*Se fija que el final de firstLine tenga una version valida de HTTP*/
+bool server::
+validVersion()
+{
+	const char *versions[VERSIONS_NUM] = { "HTTP/1.1" };	//en caso que mas adelante se acepten mas versiones, solo hay que modificar esto
+	bool ret = false;
+	for (int i = 0; (i < VERSIONS_NUM) && !ret; i++)
+	{
+		if (!firstLine.compare(firstLine.length() - strlen(versions[i]), strlen(versions[i]), versions[i]))
+		{
+			ret = true;
+			versionStart = firstLine.length() - strlen(versions[i]);	//guarda el lugar donde empieza la version, que servira para saber donde termina el filename
+		}
+	}
+	if (!ret)
+	{
+		err.type = INVALID_VERSION;
+		err.detail = "No se encontro ninguna version de HTTP valida, las esperadas son:\n";
+		for (int i = 0; i < VERSIONS_NUM; i++)
+		{
+			err.detail += ' ';
+			err.detail += versions[i];
 		}
 	}
 	return ret;
@@ -182,6 +242,38 @@ parse2ndLine()
 void server::
 isFilePresent()
 {
+	FILE * htmlFile;
+	htmlFile = fopen(path.c_str(), "rb");
+	if(htmlFile != NULL)	//se encontró el archivo solicitado 
+	{
+		sendSuccessMessage(htmlFile);	//envió mensaje al client 
+		fclose(htmlFile);
+	}
+	else
+	{
+		sendFailMessage();
+	}
+}
+
+void server::
+sendSuccessMessage(FILE * htmlFile)
+{
+	boost::system::error_code error;
+	size_t len = 0;
+
+	answerMessage = "HTTP/1.1 200 OK" ;
+
+	do
+	{
+		len = socket_forServer->write_some(boost::asio::buffer(msg, strlen(msg)), error);
+	} while ((error.value() == WSAEWOULDBLOCK));
+	if (error)
+		cout << "Error while trying to send message. " << error.message() << endl;
+}
+
+void server::
+sendFailMessage()
+{
 
 }
 
@@ -193,6 +285,7 @@ server()
 
 	socket_forServer = new boost::asio::ip::tcp::socket(*IO_handler);
 	server_acceptor = new boost::asio::ip::tcp::acceptor(*IO_handler, ep);
+
 }
 
 server::
