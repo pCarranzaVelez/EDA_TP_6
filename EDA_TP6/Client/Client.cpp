@@ -136,7 +136,15 @@ getPathAndHost(char buf[])
 	{
 		while ((buf[i] != '\0') && (i < MSGSIZE))	//todo lo que venga despues se considera como path 
 		{
-			path += buf[i++];
+			if (buf[i] != ' ')
+			{
+				path += buf[i];
+			}
+			else		//traduce los espacios a %20
+			{
+				path += "%20";
+			}
+			i++;
 		}
 	}
 }
