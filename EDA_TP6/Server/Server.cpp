@@ -150,14 +150,44 @@ bool server::
 parseFirstLine()
 {
 	bool ret = false;
-	if (validCommand() && validVersion())	//se fija que se hayan enviado tanto un comando como una version de HTTP validos
+	//if (validCommand() && validVersion())	//se fija que se hayan enviado un comando valido
+	if (validCommand())
 	{
-		while (firstLine[++commandEnd] == ' ');		//saltea los espacios hasta el principio del path
-		while (firstLine[--versionStart] == ' ');		//saltea los espacios entre el final del filename y la version
-		if (firstLine[commandEnd] == '/')
+		while (firstLine[++cursor] == ' ');		//saltea los espacios hasta el principio del path
+		if (firstLine[cursor] == '/')
 		{
-			ret = true;
-			path = firstLine.substr(commandEnd, versionStart); //si arranca con '/' guarda el path, desde donde terminan los espacios despues del comando, hasta donde arrancan los espacios antes de la version
+			path = '/';
+			while( (firstLine[++cursor] != ' ') && (firstLine[cursor] != '\0'))	//hasta el siguiente espacio
+			{
+				if( (firstLine[cursor] == '%') && !firstLine.compare(cursor, strlen("%20"), "%20"))	//si viene un %20, lo toma como espacio
+				{
+					path += ' ';
+					cursor += 2;
+				}
+				else
+				{
+					path += firstLine[cursor];
+				}
+			}
+			if (firstLine[cursor] != '\0')	//si salio por un espacio
+			{
+				while (firstLine[++cursor] == ' ');
+				if (validVersion())	//se fija que sea una version valida de HTTP
+				{
+					while (firstLine[++cursor] != '\0')	//se fija que hasta el final de la linea solo haya espacios
+					{
+						if (firstLine[cursor] != ' ')
+						{
+							err.type = WRONG_1ST_FORMAT;
+							err.detail = "Solo se eperan espacios despues de la version HTTP";
+						}
+					}
+					if (err.type != WRONG_1ST_FORMAT)
+					{
+						ret = true;
+					}
+				}
+			}
 		}
 		else
 		{
@@ -179,7 +209,7 @@ validCommand()
 		if (!firstLine.compare(0,strlen(commands[i]),commands[i]))	//si la primera parte de la linea coincide con alguno de los comandos
 		{
 			ret = true;
-			commandEnd = strlen(commands[i]);	//guarda la posicion donde termina el comando para mas adelante
+			cursor = strlen(commands[i]);	//guarda la posicion donde termina el comando para mas adelante
 		}
 	}
 	if (!ret)	//si no se encontro ninguno de los comandos
@@ -203,10 +233,10 @@ validVersion()
 	bool ret = false;
 	for (int i = 0; (i < VERSIONS_NUM) && !ret; i++)
 	{
-		if (!firstLine.compare(firstLine.length() - strlen(versions[i]), strlen(versions[i]), versions[i]))
+		if (!firstLine.compare(cursor, strlen(versions[i]), versions[i]))
 		{
 			ret = true;
-			versionStart = firstLine.length() - strlen(versions[i]);	//guarda el lugar donde empieza la version, que servira para saber donde termina el filename
+			cursor += strlen(versions[i]);
 		}
 	}
 	if (!ret)
@@ -222,21 +252,57 @@ validVersion()
 	return ret;
 }
 
+/*Se fija que la segunda linea tenga el formato correcto y que el host enviado sea uno de los esperados*/
 bool server::
 parse2ndLine()
 {
 	bool ret = false;
-	if (!secondLine.compare(0, strlen("Host: "), "Host: "))	//solo sirve si mandan con espacio despues de host:
+	const char *hosts[HOSTS_NUM] = { "localhost","127.0.0.1" };
+	if (!secondLine.compare(0, strlen("Host:"), "Host:"))	
 	{
-		secondLine.erase(0, strlen("Host: "));	
-		if (!secondLine.compare("127.0.0.1") || !secondLine.compare("localhost"))	//solo sirve si hay un espacio entre el path y HTTP...
+		cursor = strlen("Host:");
+		while (secondLine[cursor] == ' ')	//saltea espacios
 		{
-			if (firstLine[0] == '/')
+			cursor++;
+		}
+		for (int i = 0; (i < HOSTS_NUM) && !ret ; i++)
+		{
+			if (!secondLine.compare(cursor, strlen(hosts[i]), hosts[i]))	//se fija si el host enviado coincide con alguno de los esperados
 			{
-				ret = true;
+				unsigned int j = cursor;	
+				while(secondLine[++j + strlen(hosts[i])] != '\0')	//en lo que queda de la linea se fija que solo haya espacios
+				{
+					if (secondLine[j + strlen(hosts[i])] != ' ') 	//si no es un espacio
+					{
+						err.type = WRONG_2ND_FORMAT;
+						err.detail = "Error de formato de la segunda linea, solo se espera 'Host: (host)', sin mas caracteres que espacios despues de host";
+					}
+				}
+				if (err.type != WRONG_2ND_FORMAT)	//si no hubo error de formato
+				{
+					ret = true;		//hubo exito
+					host = secondLine.substr(cursor, strlen(hosts[i]));	//guarda el host enviado
+				}
 			}
 		}
+		if (!ret && (err.type == NO_SERVER_ERR))	//esta condicion para evitar pisar otros errores
+		{
+			err.type = INVALID_HOST;
+			err.detail = "No se encontro un host valido, los esperados son:\n";
+			for (int i = 0; i < HOSTS_NUM; i++)
+			{
+				err.detail += ' ';
+				err.detail += hosts[i];
+			}
+		}
+
 	}
+	else
+	{
+		err.type = WRONG_HOST_FORMAT;
+		err.detail = "La segunda linea no arranca con 'Host:'";
+	}
+	return ret;
 }
 
 void server::
@@ -261,11 +327,11 @@ sendSuccessMessage(FILE * htmlFile)
 	boost::system::error_code error;
 	size_t len = 0;
 
-	answerMessage = "HTTP/1.1 200 OK" ;
+	infoSuccessClientMessage()
 
 	do
 	{
-		len = socket_forServer->write_some(boost::asio::buffer(msg, strlen(msg)), error);
+		len = socket_forServer->write_some(boost::asio::buffer(answerMessage.c_str(), answerMessage.length()), error);
 	} while ((error.value() == WSAEWOULDBLOCK));
 	if (error)
 		cout << "Error while trying to send message. " << error.message() << endl;
@@ -275,6 +341,35 @@ void server::
 sendFailMessage()
 {
 
+}
+
+void server::
+addCrLfToString()
+{
+	answerMessage += CR;
+	answerMessage += LF;
+}
+
+void server::
+infoSuccessClientMessage()
+{
+	fseek(htmlFile, 0, SEEK_END);
+	long int contentLength = ftell(htmlFile);
+
+	answerMessage = "HTTP/1.1 200 OK";
+	addCrLfToString();
+	answerMessage += "Date: " + ;	//
+	addCrLfToString();
+	answerMessage += "Location: " + host + path;
+	addCrLfToString();
+	answerMessage += "Cache-Control: max - age = 30";
+	addCrLfToString();
+	answerMessage += "Expires: " + date mas 30;	//
+	addCrLfToString();
+	answerMessage += "Content-Length: " + to_string(;	//
+	addCrLfToString();
+	answerMessage += "Content-Type: text/html; charset=iso-8859-1";
+	addCrLfToString();
 }
 
 server::

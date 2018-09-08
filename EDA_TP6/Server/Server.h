@@ -17,12 +17,15 @@
 #define MAXTIME 20
 #define COMMAND_NUM 1	//cantidad de comandos HTTP esperados, si se aumenta, agregar los comandos esperados en server::validCommand()
 #define VERSIONS_NUM 1
+#define HOSTS_NUM 2
+
 #define LF 0x0A
 #define CR 0x0D
 
 using namespace std;
 
-typedef enum{NO_SERVER_ERR,WRONG_CRLF_FORMAT,INVALID_COMMAND,INVALID_VERSION,WRONG_PATH_FORMAT}servErrType;
+typedef enum{NO_SERVER_ERR,WRONG_CRLF_FORMAT,INVALID_COMMAND,INVALID_VERSION,WRONG_PATH_FORMAT,WRONG_HOST_FORMAT,
+INVALID_HOST,WRONG_1ST_FORMAT,WRONG_2ND_FORMAT}servErrType;
 
 typedef struct
 {
@@ -47,9 +50,14 @@ private:
 	string firstLine;
 	string secondLine;
 	string path;
+	string host;
 	string answerMessage;
-	unsigned int commandEnd;
+	serverError err;
+	/*Variables para ubicacion dentro de los strings*/
+	unsigned int cursor;
 	unsigned int versionStart;
+	unsigned int hostStart;
+	/*Metodos*/
 	bool validMessage(char buf[]);
 	bool parseFirstLine();
 	bool validCommand();
@@ -58,5 +66,6 @@ private:
 	bool parse2ndLine();
 	void sendSuccessMessage(FILE * htmlFile);
 	void sendFailMessage();
-	serverError err;
+	void addCrLfToString();
+	void infoSuccessClientMessage();
 };
