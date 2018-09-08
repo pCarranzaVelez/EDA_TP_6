@@ -81,7 +81,7 @@ receiveMessage(bool * value)
 			{
 				if (parse2ndLine())		//se fija que la segunda linea este en el formato esperado
 				{
-					cout << "Correct format, searching file..." << endl;
+					cout << "Correct format, searching " << path << "..." << endl;
 					isFilePresent();	//si estaba en el formato correcto busca el archivo solicitado y le contesta al cliente
 				}
 			}
