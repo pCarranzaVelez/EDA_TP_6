@@ -79,26 +79,17 @@ receiveMessage(bool * value)
 		{
 			if (parseFirstLine())	//se fija que la primera linea este en el formato esperado
 			{
-				if (parse2ndLine())		//se fija que la primera linea este en el formato esperado
+				if (parse2ndLine())		//se fija que la segunda linea este en el formato esperado
 				{
+					cout << "Correct format, searching file..." << endl;
 					isFilePresent();	//si estaba en el formato correcto busca el archivo solicitado y le contesta al cliente
 				}
-				else	//si no vino en el formato esperado lo ignora
-				{
-					cout << err.detail;
-					err.type = NO_SERVER_ERR;
-				}
-			}
-			else	//si no vino en el formato esperado lo ignora
-			{
-				cout << err.detail;
-				err.type = NO_SERVER_ERR;
 			}
 		}
-		else	//si no vino en el formato esperado lo ignora
+		if (err.type != NO_SERVER_ERR)	//si hubo algun error
 		{
-			cout << err.detail;	
-			err.type = NO_SERVER_ERR;
+			cout << err.detail << endl;
+			err.type = NO_SERVER_ERR;	
 		}
 	}
 	else
@@ -117,13 +108,15 @@ validMessage(char buf[])
 {
 	int i = 0;
 	bool ret = false;
+	firstLine = "";
+	secondLine = "";
 	while ((buf[i] != CR) && (buf[i] != '\0'))	//busca carriage return o el terminador, en ese caso error
 	{
 		firstLine += buf[i++];
 	}
 	if ((buf[i] == CR) && (buf[i+1] == LF))	//si la linea termino con CRLF continua
 	{
-		i++;
+		i+=2;
 		while ((buf[i] != CR) && (buf[i] != '\0'))	//busca carriage return, pero termina tambien si encuentra el terminador, con error
 		{
 			secondLine += buf[i++]; 
@@ -131,6 +124,7 @@ validMessage(char buf[])
 		if( (buf[i] == CR) && (buf[i+1] == LF) && (buf[i+2] == CR) && (buf[i + 3] == LF))	//si enuentra dos CRLF seguidos termina con exito el mensaje, sino error
 		{
 			ret = true;
+			err.type = NO_SERVER_ERR;
 		}
 		else
 		{
@@ -150,8 +144,8 @@ bool server::
 parseFirstLine()
 {
 	bool ret = false;
-	//if (validCommand() && validVersion())	//se fija que se hayan enviado un comando valido
-	if (validCommand())
+	//if (validCommand() && validVersion())	
+	if (validCommand())		//se fija que se hayan enviado un comando valido
 	{
 		while (firstLine[++cursor] == ' ');		//saltea los espacios hasta el principio del path
 		if (firstLine[cursor] == '/')
@@ -185,6 +179,7 @@ parseFirstLine()
 					if (err.type != WRONG_1ST_FORMAT)
 					{
 						ret = true;
+						err.type = NO_SERVER_ERR;
 					}
 				}
 			}
@@ -236,6 +231,7 @@ validVersion()
 		if (!firstLine.compare(cursor, strlen(versions[i]), versions[i]))
 		{
 			ret = true;
+			err.type = NO_SERVER_ERR;
 			cursor += strlen(versions[i]);
 		}
 	}
@@ -270,13 +266,14 @@ parse2ndLine()
 			if (!secondLine.compare(cursor, strlen(hosts[i]), hosts[i]))	//se fija si el host enviado coincide con alguno de los esperados
 			{
 				unsigned int j = cursor;	
-				while(secondLine[++j + strlen(hosts[i])] != '\0')	//en lo que queda de la linea se fija que solo haya espacios
+				while(secondLine[j + strlen(hosts[i])] != '\0')	//en lo que queda de la linea se fija que solo haya espacios
 				{
 					if (secondLine[j + strlen(hosts[i])] != ' ') 	//si no es un espacio
 					{
 						err.type = WRONG_2ND_FORMAT;
 						err.detail = "Error de formato de la segunda linea, solo se espera 'Host: (host)', sin mas caracteres que espacios despues de host";
 					}
+					j++;
 				}
 				if (err.type != WRONG_2ND_FORMAT)	//si no hubo error de formato
 				{

@@ -7,7 +7,7 @@ main(int argc, char* argv[])
 	cout << "Trying to connect to " << SERVER_IP << " on port " << HELLO_PORT_STR << std::endl;
 	conquering.startConnection(SERVER_IP);
 	bool exit = conquering.receiveMessage();
-	conquering.messageToServer("Soy el Client");
+	//conquering.messageToServer("Soy el Client");
 	do
 	{
 		conquering.messageToServer();

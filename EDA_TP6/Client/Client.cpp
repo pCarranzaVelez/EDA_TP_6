@@ -85,8 +85,7 @@ messageToServer()
 	cout << "Write your message:" << endl;
 	cin.getline(buf,sizeof(buf));
 
-	//lo que haya en buf lo parsea y lo mete en host y path
-	getPathAndHost(buf);
+	getPathAndHost(buf);	//lo que haya en buf lo parsea y lo mete en host y path
 	if (err.type != NO_ERR)
 	{
 		cout << err.detail << endl;
@@ -101,6 +100,8 @@ messageToServer()
 		} while ((error.value() == WSAEWOULDBLOCK));
 		if (error)
 			cout << "Error while trying to connect to server " << error.message() << endl;
+		else
+			cout << "Message succesfully sent:" << endl << serverMessage.c_str();
 	}
 }
 
@@ -123,6 +124,8 @@ void client::
 getPathAndHost(char buf[])
 {
 	int i = 0;
+	host = "";
+	path = "";
 	while( (buf[i] != '/') && (i<MSGSIZE))	//hasta la primera barra es el host
 	{
 		host += buf[i++];
