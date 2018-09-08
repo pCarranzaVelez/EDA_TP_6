@@ -381,7 +381,7 @@ getCurrentDate(int state)	//devuelve la fecha y hora en el formato pedido (ejemp
 	{
 		if (timeinfo->tm_sec + 30 > 60)
 		{
-			timeinfo->tm_sec = 60 - (timeinfo->tm_sec + 30);
+			timeinfo->tm_sec = (timeinfo->tm_sec - 60) + 30;
 			timeinfo->tm_min++;
 			strftime(forDate, 100, "%a, %d %h %Y %X %Z", timeinfo);
 		}
