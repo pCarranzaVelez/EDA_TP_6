@@ -13,9 +13,11 @@ main(int argc, char* argv[])
 	conquering.sendMessage();
 	do
 	{
-		conquering.receiveMessage(&value);
-		conquering.sendMessage("Message received");
-		cout << endl;
+		if(conquering.receiveMessage(&value))		
+			conquering.sendMessage("Message received");
+		else
+			conquering.sendMessage((conquering.getError()).detail.c_str());
+		
 	} while (value);
 	conquering.sendMessage("exit");
 	conquering.sendMessage("Server timed out");

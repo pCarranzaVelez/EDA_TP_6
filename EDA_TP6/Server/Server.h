@@ -26,7 +26,7 @@
 using namespace std;
 
 typedef enum{NO_SERVER_ERR,WRONG_CRLF_FORMAT,INVALID_COMMAND,INVALID_VERSION,WRONG_PATH_FORMAT,WRONG_HOST_FORMAT,
-INVALID_HOST,WRONG_1ST_FORMAT,WRONG_2ND_FORMAT}servErrType;
+INVALID_HOST,WRONG_1ST_FORMAT,WRONG_2ND_FORMAT, CLIENT_CONNECTION_ERR}servErrType;
 
 typedef struct
 {
@@ -41,7 +41,8 @@ public:
 	void startConnection();
 	void sendMessage();
 	void sendMessage(const char msg[MSGSIZE]);
-	void receiveMessage(bool * ret);
+	bool receiveMessage(bool * ret);
+	serverError getError();
 	~server();
 
 private:

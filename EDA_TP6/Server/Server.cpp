@@ -54,9 +54,10 @@ sendMessage(const char msg[MSGSIZE])
 		cout << "Error while trying to connect to server " << error.message() << endl;
 }
 
-void server::
+bool server::
 receiveMessage(bool * value)
 {
+	bool ret = false;
 	boost::system::error_code error;
 	char buf[MSGSIZE];
 	size_t len = 0;
@@ -81,6 +82,7 @@ receiveMessage(bool * value)
 			{
 				if (parse2ndLine())		//se fija que la segunda linea este en el formato esperado
 				{
+					ret = true;
 					cout << "Correct format, searching " << path << "..." << endl;
 					isFilePresent();	//si estaba en el formato correcto busca el archivo solicitado y le contesta al cliente
 				}
@@ -96,7 +98,10 @@ receiveMessage(bool * value)
 	{
 		*value = false;
 		cout << "Error while trying to connect with client " << error.message() << std::endl;
+		err.type = CLIENT_CONNECTION_ERR;
+		err.detail = error.message();
 	}
+	return ret;
 }
 
 /*validMessage: se fija que la primera linea termine con CRLF y la segunda con doble CRLF
@@ -431,6 +436,13 @@ server()
 	server_acceptor = new boost::asio::ip::tcp::acceptor(*IO_handler, ep);
 
 }
+
+serverError server::
+getError()
+{
+	return err;
+}
+
 
 server::
 ~server()
