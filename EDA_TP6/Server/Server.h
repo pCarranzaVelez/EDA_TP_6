@@ -15,7 +15,8 @@
 #define HELLO_PORT 80
 
 #define MSGSIZE 512
-#define MAXTIME 20
+#define INIT 1
+#define MAX 2
 #define COMMAND_NUM 1	//cantidad de comandos HTTP esperados, si se aumenta, agregar los comandos esperados en server::validCommand()
 #define VERSIONS_NUM 1
 #define HOSTS_NUM 2
@@ -69,7 +70,7 @@ private:
 	void sendSuccessMessage(FILE * htmlFile);
 	void sendFailMessage();
 	string contentLength(FILE *htmlFile);
-	string getCurrentDate();
+	string getCurrentDate(int state);
 	void infoSuccessClientMessage(FILE *htmlFile);
 	void infoFailClientMessage();
 };

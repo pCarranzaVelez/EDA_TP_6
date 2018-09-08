@@ -364,7 +364,7 @@ contentLength(FILE *htmlFile)	//devuelve el largo del archivo (bytes) en un stri
 }
 
 string server::
-getCurrentDate()	//devuelve la fecha y hora en el formato pedido (ejemplo: Tue, 04 Sep 2018 18:21:19 GMT)
+getCurrentDate(int state)	//devuelve la fecha y hora en el formato pedido (ejemplo: Tue, 04 Sep 2018 18:21:19 GMT)
 {
 	time_t time_;
 	struct tm * timeinfo;
@@ -373,7 +373,24 @@ getCurrentDate()	//devuelve la fecha y hora en el formato pedido (ejemplo: Tue, 
 	time(&time_);
 	timeinfo = localtime(&time_);
 
-	strftime(forDate, 100, "%a, %d %h %Y %X %Z", timeinfo);	
+	if (state == INIT)
+	{
+		strftime(forDate, 100, "%a, %d %h %Y %X %Z", timeinfo);
+	}
+	else
+	{
+		if (timeinfo->tm_sec + 30 > 60)
+		{
+			timeinfo->tm_sec = 60 - (timeinfo->tm_sec + 30);
+			timeinfo->tm_min++;
+			strftime(forDate, 100, "%a, %d %h %Y %X %Z", timeinfo);
+		}
+		else
+		{
+			timeinfo->tm_sec = timeinfo->tm_sec + 30;
+			strftime(forDate, 100, "%a, %d %h %Y %X %Z", timeinfo);
+		}
+	}
 	return forDate;
 }
 
@@ -383,7 +400,7 @@ infoSuccessClientMessage(FILE *htmlFile)
 	answerMessage = "HTTP/1.1 200 OK";
 	answerMessage += CR;
 	answerMessage += LF;
-	answerMessage += "Date: " + getCurrentDate();
+	answerMessage += "Date: " + getCurrentDate(INIT);
 	answerMessage += CR;
 	answerMessage += LF;
 	answerMessage += "Location: " + host + path;
@@ -392,7 +409,7 @@ infoSuccessClientMessage(FILE *htmlFile)
 	answerMessage += "Cache-Control: max-age = 30";
 	answerMessage += CR;
 	answerMessage += LF;
-	answerMessage += "Expires: ";// +date mas 30s
+	answerMessage += "Expires: " + getCurrentDate(MAX);// +date mas 30s
 	answerMessage += CR;
 	answerMessage += LF;
 	answerMessage += "Content-Length: " + contentLength(htmlFile);
@@ -411,13 +428,13 @@ infoFailClientMessage()
 	answerMessage = "HTTP/1.1 404 Not Found";
 	answerMessage += CR;
 	answerMessage += LF;
-	answerMessage += "Date: " + getCurrentDate();
+	answerMessage += "Date: " + getCurrentDate(INIT);
 	answerMessage += CR;
 	answerMessage += LF;
 	answerMessage += "Cache-Control: max-age = 30";
 	answerMessage += CR;
 	answerMessage += LF;
-	answerMessage += "Expires: ";// +date mas 30s
+	answerMessage += "Expires: " + getCurrentDate(MAX);// +date mas 30s
 	answerMessage += CR;
 	answerMessage += LF;
 	answerMessage += "Content-Length: 0";
