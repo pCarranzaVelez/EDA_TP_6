@@ -165,6 +165,7 @@ parseFirstLine()
 				}
 				//else if ((firstLine[cursor] = '\\'))
 				//{
+
 				//	path += firstLine[cursor];
 				//	path += '\\';
 				//}
