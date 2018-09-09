@@ -156,20 +156,20 @@ parseFirstLine()
 		if (firstLine[cursor] == '\\')
 		{
 			path = '\\';
-			while ((firstLine[++cursor] != ' ') && (firstLine[cursor] != '\0') && (firstLine[cursor] != '\\'))	//hasta el siguiente espacio
+			while ((firstLine[++cursor] != ' ') && (firstLine[cursor] != '\0'))	//hasta el siguiente espacio
 			{
 				if ((firstLine[cursor] == '%') && !firstLine.compare(cursor, strlen("%20"), "%20"))	//si viene un %20, lo toma como espacio
 				{
 					path += ' ';
 					cursor += 2;
 				}
+				else if ((firstLine[cursor] = '\\'))
+				{
+					path += firstLine[cursor];
+					path += '\\';
+				}
 			}
-			if ((firstLine[cursor] = '\\'))
-			{
-				path += firstLine[cursor];
-				path += '\\';
-			}
-			else if (firstLine[cursor] != '\0')	//si salio por un espacio
+			if (firstLine[cursor] != '\0')	//si salio por un espacio
 			{
 				while (firstLine[++cursor] == ' ');
 				if (validVersion())	//se fija que sea una version valida de HTTP
@@ -312,9 +312,9 @@ void server::
 isFilePresent()	//se fija si existe el archivo y envía mensaje al client dependiendo del resultado de búsqueda
 {
 	FILE * htmlFile;
-	//string test = "\\Users\\Pilar\\Desktop\\carpeta1\\prueba1.html";
-	htmlFile = fopen(path.c_str(), "rb");
-	//htmlFile = fopen(test.c_str(), "rb");
+	string test = "\\Users\\Pilar\\Desktop\\carpeta1\\prueba1.html";
+	//htmlFile = fopen(path.c_str(), "rb");
+	htmlFile = fopen(test.c_str(), "rb");
 	if(htmlFile != NULL)	//se encontró el archivo solicitado 
 	{
 		sendSuccessMessage(htmlFile);	//envía mensaje de éxito al client
@@ -423,7 +423,7 @@ infoSuccessClientMessage(FILE *htmlFile)
 	answerMessage += CR;
 	answerMessage += LF;
 
-	//contenido del archivo
+	/*//contenido del archivo
 	string fileContent = "";
 	while (!feof(htmlFile))
 	{
@@ -431,14 +431,14 @@ infoSuccessClientMessage(FILE *htmlFile)
 	}
 	answerMessage += fileContent;
 	answerMessage += CR;
-	answerMessage += LF;
+	answerMessage += LF;*/
 
 }
 
 void server::
 infoFailClientMessage()
 {
-	/*answerMessage = "HTTP/1.1 404 Not Found";
+	answerMessage = "HTTP/1.1 404 Not Found";
 	answerMessage += CR;
 	answerMessage += LF;
 	answerMessage += "Date: " + getCurrentDate(INIT);
@@ -452,11 +452,11 @@ infoFailClientMessage()
 	answerMessage += LF;
 	answerMessage += "Content-Length: 0";
 	answerMessage += CR;
-	answerMessage += LF;*/
-	for (int i = 0; i < 2000; i++)
+	answerMessage += LF;
+	/*for (int i = 0; i < 2000; i++)
 	{
 		answerMessage += i%20 + 'A';
-	}
+	}*/
 }
 
 string server::
