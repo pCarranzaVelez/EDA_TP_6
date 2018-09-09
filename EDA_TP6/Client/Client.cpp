@@ -146,14 +146,14 @@ getPathAndHost(char buf[])
 	int i = 0;
 	host = "";
 	path = "";
-	while( (buf[i] != '/') && (i<MSGSIZE))	//hasta la primera barra es el host
+	while ((buf[i] != '\\') && (i < MSGSIZE))	//hasta la primera barra es el host
 	{
 		host += buf[i++];
 	}
-	if (i == MSGSIZE)	//si no encontro '/' es error
+	if (i == MSGSIZE)	//si no encontro '\' es error
 	{
 		err.type = NO_SLASH;
-		err.detail = "No se recibio ningun caracter '/', ingrese localhost/path/filename\n";
+		err.detail = "No se recibio ningun caracter \\ , ingrese localhost\\path\\filename\n";
 	}
 	else
 	{
