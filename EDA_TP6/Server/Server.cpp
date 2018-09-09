@@ -463,22 +463,19 @@ infoFailClientMessage()
 string server::
 getFileLine(FILE *htmlFile) //devuelve una linea de un archivo de texto
 {
-	char *buff = (char *)malloc(100 * sizeof(char));   //asumo que las lineas no se pasan de los 100 caracteres
-	buff[0] = '0';				//despejar posible error	
+	string buff = "";	
 	int i = 0;
-	while (buff[i] != '\n' || buff[i] != '\r' || buff[i] != EOF)
+	while (buff.c_str[i] != '\n' && buff.c_str[i] != '\r' && buff.c_str[i] != EOF)
 	{
-		buff[i] = fgetc(htmlFile);
+		buff.c_str[i] += fgetc(htmlFile);
 		i++;
 	}
 	
-	buff[++i] = '\r';
-	buff[++i] = '\n';
-	buff[++i] = '\0';
+	buff.c_str[++i] = '\r';
+	buff.c_str[++i] = '\n';
+	buff.c_str[++i] = '\0';
 
-	string file_line(buff);
-	free(buff);			//libero el buffer
-	return file_line;
+	return buff;
 }
 
 server::
