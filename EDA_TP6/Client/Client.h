@@ -8,7 +8,7 @@
 #define HELLO_PORT_STR "80"
 #define SERVER_IP "localhost"
 
-#define MSGSIZE 512
+#define MSGSIZE 512U
 
 #define LF 0x0A
 #define CR 0x0D
@@ -45,5 +45,6 @@ private:
 	clientError err;
 	void info2ServerMessage();
 	void getPathAndHost(char buf[]);
+	void clearBuf(char buf[], unsigned int size);
 };
 

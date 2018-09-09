@@ -435,7 +435,7 @@ infoSuccessClientMessage(FILE *htmlFile)
 void server::
 infoFailClientMessage()
 {
-	answerMessage = "HTTP/1.1 404 Not Found";
+	/*answerMessage = "HTTP/1.1 404 Not Found";
 	answerMessage += CR;
 	answerMessage += LF;
 	answerMessage += "Date: " + getCurrentDate(INIT);
@@ -449,8 +449,11 @@ infoFailClientMessage()
 	answerMessage += LF;
 	answerMessage += "Content-Length: 0";
 	answerMessage += CR;
-	answerMessage += LF;
-
+	answerMessage += LF;*/
+	for (int i = 0; i < 2000; i++)
+	{
+		answerMessage += i%20 + 'A';
+	}
 }
 
 string server::

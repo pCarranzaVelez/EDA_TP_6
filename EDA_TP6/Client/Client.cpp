@@ -47,15 +47,26 @@ receiveMessage()
 	t.start();
 	boost::timer::cpu_times pastTime = t.elapsed();
 	double elapsedSeconds = 0.0;
-	//messageFromServer = "";
+	messageFromServer = "";
 	do
 	{
 		len = socket_forClient->read_some(boost::asio::buffer(buf), error);
-		//messageFromServer += buf;
-		//vaciar el buffer
-		if (!error)
-			buf[len] = '\0';
-
+		if (!error)	//si no hubo error guarda la parte recibida del mensaje y vacia el buffer
+		{
+			if (len < MSGSIZE)
+			{
+				buf[len] = '\0';
+				messageFromServer += buf;
+			}
+			else if (len == MSGSIZE)
+			{
+				char charBuf = buf[len-1];	//cuando len vale MSGSIZE no se puede escribir en buf[len]
+				buf[len - 1] = '\0';
+				messageFromServer += buf;
+				messageFromServer += charBuf; 
+			}
+			clearBuf(buf, MSGSIZE);		//vacia el buffer
+		}
 	} while (error.value() == WSAEWOULDBLOCK);
 
 	if (!error)
@@ -66,7 +77,8 @@ receiveMessage()
 		}
 		else
 		{
-			cout << endl << "Server says: " << buf << endl;
+			cout << endl << "Server says: " << messageFromServer.c_str() << endl;
+			//cout << endl << "Server says: " << buf << endl;
 		}
 	}
 	else
@@ -75,6 +87,13 @@ receiveMessage()
 		ret = true;
 	}
 	return ret;
+}
+
+void client::
+clearBuf(char buf[],unsigned int size)
+{
+	for (unsigned int i = 0; i < size; i++)
+		buf[i] = '\0';
 }
 
 void client::
