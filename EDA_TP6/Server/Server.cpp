@@ -163,11 +163,11 @@ parseFirstLine()
 					path += ' ';
 					cursor += 2;
 				}
-				else if ((firstLine[cursor] = '\\'))
-				{
-					path += firstLine[cursor];
-					path += '\\';
-				}
+				//else if ((firstLine[cursor] = '\\'))
+				//{
+				//	path += firstLine[cursor];
+				//	path += '\\';
+				//}
 			}
 			if (firstLine[cursor] != '\0')	//si salio por un espacio
 			{
