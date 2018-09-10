@@ -96,9 +96,11 @@ clearBuf(char buf[],unsigned int size)
 		buf[i] = '\0';
 }
 
-void client::
+/*Devuelve true si se comunico con el server, para saber si esperar una respuesta o no*/
+bool client::
 messageToServer()
 {
+	bool ret = false;
 	boost::system::error_code error;
 	char buf[MSGSIZE];
 	size_t len = 0;
@@ -113,6 +115,7 @@ messageToServer()
 	}
 	else
 	{
+		ret = true;
 		info2ServerMessage();	//mete lo recibido del usuario en messageToServer con el formato que espera el server
 		do
 		{
@@ -123,6 +126,7 @@ messageToServer()
 		else
 			cout << "Message succesfully sent:" << endl << serverMessage.c_str();
 	}
+	return ret;
 }
 
 void client::

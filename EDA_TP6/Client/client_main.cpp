@@ -10,11 +10,12 @@ main(int argc, char* argv[])
 
 	do
 	{
-		conquering.messageToServer();
-		cout << endl;
-		exit = conquering.receiveMessage();
-		//exit = conquering.receiveMessage();
-		cout << endl;
+		if (conquering.messageToServer())	//si le mando un mensaje al server, espera respuesta
+		{
+			cout << endl;
+			exit = conquering.receiveMessage();
+			cout << endl;
+		}
 	} while (!(exit));
 
 	return 0;

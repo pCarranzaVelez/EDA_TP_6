@@ -29,7 +29,7 @@ public:
 	client();
 	bool startConnection(const char* host);
 	bool receiveMessage();
-	void messageToServer();
+	bool messageToServer();
 	void messageToServer(const char msg[MSGSIZE]);
 	~client();
 

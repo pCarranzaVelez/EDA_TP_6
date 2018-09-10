@@ -423,11 +423,13 @@ infoSuccessClientMessage(FILE *htmlFile)
 	answerMessage += LF;
 
 	//contenido del archivo
-	char *fileContent = new char[fileLength];
+	//char *fileContent = new char[fileLength];
+	char* fileContent = (char*)malloc( (fileLength + 1) * sizeof(char));
 	fread(fileContent, sizeof(char), fileLength, htmlFile);
 	fileContent[fileLength] = '\0';
 	answerMessage += fileContent;
-	delete fileContent;
+	//delete[] fileContent;
+	free(fileContent);
 	answerMessage += CR;
 	answerMessage += LF;
 }
