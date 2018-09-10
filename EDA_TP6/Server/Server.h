@@ -56,7 +56,6 @@ private:
 	string path;
 	string host;
 	string answerMessage;
-	string buff;
 	serverError err;
 	/*Variables para ubicacion dentro de los strings*/
 	unsigned int cursor;
@@ -71,9 +70,8 @@ private:
 	bool parse2ndLine();
 	void sendSuccessMessage(FILE * htmlFile);
 	void sendFailMessage();
-	string contentLength(FILE *htmlFile);
+	long int contentLength(FILE *htmlFile);
 	string getCurrentDate(int state);
-	void getFileLine(FILE *htmlFile);
 	void infoSuccessClientMessage(FILE *htmlFile);
 	void infoFailClientMessage();
 };

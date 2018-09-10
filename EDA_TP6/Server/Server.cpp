@@ -150,12 +150,12 @@ parseFirstLine()
 {
 	bool ret = false;
 	//if (validCommand() && validVersion())	
+	path = "";
 	if (validCommand())		//se fija que se hayan enviado un comando valido
 	{
 		while (firstLine[++cursor] == ' ');		//saltea los espacios hasta el principio del path
 		if (firstLine[cursor] == '\\')
 		{
-			path = '\\';
 			while ((firstLine[++cursor] != ' ') && (firstLine[cursor] != '\0'))	//hasta el siguiente espacio
 			{
 				if ((firstLine[cursor] == '%') && !firstLine.compare(cursor, strlen("%20"), "%20"))	//si viene un %20, lo toma como espacio
@@ -311,9 +311,7 @@ void server::
 isFilePresent()	//se fija si existe el archivo y envía mensaje al client dependiendo del resultado de búsqueda
 {
 	FILE * htmlFile;
-	string test = "\\Users\\Pilar\\Desktop\\carpeta1\\prueba1.html";
-	//htmlFile = fopen(path.c_str(), "rb");
-	htmlFile = fopen(test.c_str(), "rb");
+	htmlFile = fopen(path.c_str(), "rb");
 	if(htmlFile != NULL)	//se encontró el archivo solicitado 
 	{
 		sendSuccessMessage(htmlFile);	//envía mensaje de éxito al client
@@ -358,12 +356,13 @@ sendFailMessage()	//envía el mensaje de error al client
 		cout << "Error while trying to send message to client. " << error.message() << endl;
 }
 
-string server::
+long int server::
 contentLength(FILE *htmlFile)	//devuelve el largo del archivo (bytes) en un string
 {
 	fseek(htmlFile, 0, SEEK_END);
 	long int contentLength = ftell(htmlFile);
-	return to_string(contentLength);
+	rewind(htmlFile);
+	return contentLength;
 }
 
 string server::
@@ -400,6 +399,7 @@ getCurrentDate(int state)	//devuelve la fecha y hora en el formato pedido (ejemp
 void server::
 infoSuccessClientMessage(FILE *htmlFile)
 {
+	long int fileLength = contentLength(htmlFile);
 	answerMessage = "HTTP/1.1 200 OK";
 	answerMessage += CR;
 	answerMessage += LF;
@@ -415,23 +415,21 @@ infoSuccessClientMessage(FILE *htmlFile)
 	answerMessage += "Expires: " + getCurrentDate(MAX);// +date mas 30s
 	answerMessage += CR;
 	answerMessage += LF;
-	answerMessage += "Content-Length: " + contentLength(htmlFile);
+	answerMessage += "Content-Length: " + to_string(fileLength);
 	answerMessage += CR;
 	answerMessage += LF;
 	answerMessage += "Content-Type: text/html; charset=iso-8859-1";
 	answerMessage += CR;
 	answerMessage += LF;
 
-	/*//contenido del archivo
-	string fileContent = "";
-	while (!feof(htmlFile))
-	{
-		fileContent += getFileLine(htmlFile);
-	}
+	//contenido del archivo
+	char *fileContent = new char[fileLength];
+	fread(fileContent, sizeof(char), fileLength, htmlFile);
+	fileContent[fileLength] = '\0';
 	answerMessage += fileContent;
+	delete fileContent;
 	answerMessage += CR;
-	answerMessage += LF;*/
-
+	answerMessage += LF;
 }
 
 void server::
@@ -458,20 +456,6 @@ infoFailClientMessage()
 	}*/
 }
 
-void server::
-getFileLine(FILE *htmlFile) //devuelve una linea de un archivo de texto
-{
-	buff = "";	
-	int i = 0;
-	while (buff[i] != '\n' && buff[i] != '\r' && buff[i] != EOF)
-	{
-		buff[i] += fgetc(htmlFile);
-		i++;
-	}
-	
-	buff[++i] = '\r';
-	buff[++i] = '\n';
-}
 
 server::
 server()
