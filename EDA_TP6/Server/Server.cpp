@@ -424,15 +424,16 @@ infoSuccessClientMessage(FILE *htmlFile)
 	answerMessage += CR;
 	answerMessage += LF;
 
-	/*//contenido del archivo
+
 	string fileContent = "";
 	while (!feof(htmlFile))
 	{
-		fileContent += getFileLine(htmlFile);
+		getFileLine(htmlFile);
+		fileContent += buff;
 	}
 	answerMessage += fileContent;
 	answerMessage += CR;
-	answerMessage += LF;*/
+	answerMessage += LF;
 
 }
 
@@ -460,22 +461,19 @@ infoFailClientMessage()
 	}*/
 }
 
-string server::
+void server::
 getFileLine(FILE *htmlFile) //devuelve una linea de un archivo de texto
-{
-	string buff = "";	
+{	
+	buff = "";
 	int i = 0;
-	while (buff.c_str[i] != '\n' && buff.c_str[i] != '\r' && buff.c_str[i] != EOF)
+	while (buff[i] != '\n' && buff[i] != '\r' && buff[i] != EOF)
 	{
-		buff.c_str[i] += fgetc(htmlFile);
+		buff[i] += fgetc(htmlFile);
 		i++;
 	}
 	
-	buff.c_str[++i] = '\r';
-	buff.c_str[++i] = '\n';
-	buff.c_str[++i] = '\0';
-
-	return buff;
+	buff[++i] = '\r';
+	buff[++i] = '\n';
 }
 
 server::
