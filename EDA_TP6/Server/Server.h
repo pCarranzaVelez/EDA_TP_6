@@ -56,6 +56,7 @@ private:
 	string path;
 	string host;
 	string answerMessage;
+	string buff;
 	serverError err;
 	/*Variables para ubicacion dentro de los strings*/
 	unsigned int cursor;
@@ -72,7 +73,7 @@ private:
 	void sendFailMessage();
 	string contentLength(FILE *htmlFile);
 	string getCurrentDate(int state);
-	string getFileLine(FILE *htmlFile);
+	void getFileLine(FILE *htmlFile);
 	void infoSuccessClientMessage(FILE *htmlFile);
 	void infoFailClientMessage();
 };

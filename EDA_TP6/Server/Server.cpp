@@ -163,12 +163,10 @@ parseFirstLine()
 					path += ' ';
 					cursor += 2;
 				}
-				//else if ((firstLine[cursor] = '\\'))
-				//{
-
-				//	path += firstLine[cursor];
-				//	path += '\\';
-				//}
+				else
+				{
+					path += firstLine[cursor];
+				}
 			}
 			if (firstLine[cursor] != '\0')	//si salio por un espacio
 			{
@@ -460,22 +458,19 @@ infoFailClientMessage()
 	}*/
 }
 
-string server::
+void server::
 getFileLine(FILE *htmlFile) //devuelve una linea de un archivo de texto
 {
-	string buff = "";	
+	buff = "";	
 	int i = 0;
-	while (buff.c_str[i] != '\n' && buff.c_str[i] != '\r' && buff.c_str[i] != EOF)
+	while (buff[i] != '\n' && buff[i] != '\r' && buff[i] != EOF)
 	{
-		buff.c_str[i] += fgetc(htmlFile);
+		buff[i] += fgetc(htmlFile);
 		i++;
 	}
 	
-	buff.c_str[++i] = '\r';
-	buff.c_str[++i] = '\n';
-	buff.c_str[++i] = '\0';
-
-	return buff;
+	buff[++i] = '\r';
+	buff[++i] = '\n';
 }
 
 server::
