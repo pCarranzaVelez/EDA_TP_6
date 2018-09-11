@@ -7,7 +7,6 @@ main(int argc, char* argv[])
 	cout << "Trying to connect to " << SERVER_IP << " on port " << HELLO_PORT_STR << std::endl;
 	conquering.startConnection(SERVER_IP);
 	bool exit = conquering.receiveMessage();
-
 	do
 	{
 		if (conquering.messageToServer())	//si le mando un mensaje al server, espera respuesta
@@ -17,6 +16,8 @@ main(int argc, char* argv[])
 			cout << endl;
 		}
 	} while (!(exit));
+	cout << "Presione Enter para salir del programa" << endl;
+	getchar();
 
 	return 0;
 }

@@ -333,11 +333,12 @@ sendSuccessMessage(FILE * htmlFile)	//envía el mensaje de éxito al client
 
 	do
 	{
+		cout << "Sending message..." << endl;
 		len = socket_forServer->write_some(boost::asio::buffer(answerMessage.c_str(), answerMessage.length()), error);
+		cout << "Sent " << len << " bytes" << endl;
 	} while ((error.value() == WSAEWOULDBLOCK));
 	if (error)
 		cout << "Error while trying to send message to client. " << error.message() << endl;
-
 }
 
 void server::
@@ -384,7 +385,15 @@ getCurrentDate(int state)	//devuelve la fecha y hora en el formato pedido (ejemp
 		if (timeinfo->tm_sec + 30 > 60)
 		{
 			timeinfo->tm_sec = (timeinfo->tm_sec - 60) + 30;
-			timeinfo->tm_min++;
+			if (timeinfo->tm_min == 59)
+			{
+				timeinfo->tm_min = 0;
+				timeinfo->tm_hour++;
+			}
+			else
+			{
+				timeinfo->tm_min++;
+			}
 			strftime(forDate, 100, "%a, %d %h %Y %X %Z", timeinfo);
 		}
 		else
@@ -395,6 +404,7 @@ getCurrentDate(int state)	//devuelve la fecha y hora en el formato pedido (ejemp
 	}
 	return forDate;
 }
+
 
 void server::
 infoSuccessClientMessage(FILE *htmlFile)
@@ -421,14 +431,11 @@ infoSuccessClientMessage(FILE *htmlFile)
 	answerMessage += "Content-Type: text/html; charset=iso-8859-1";
 	answerMessage += CR;
 	answerMessage += LF;
-
-	//contenido del archivo
-	//char *fileContent = new char[fileLength];
+	//carga el contenido del archivo
 	char* fileContent = (char*)malloc( (fileLength + 1) * sizeof(char));
 	fread(fileContent, sizeof(char), fileLength, htmlFile);
 	fileContent[fileLength] = '\0';
 	answerMessage += fileContent;
-	//delete[] fileContent;
 	free(fileContent);
 	answerMessage += CR;
 	answerMessage += LF;
@@ -486,4 +493,3 @@ server::
 	delete socket_forServer;
 	delete IO_handler;
 }
-

@@ -38,63 +38,74 @@ startConnection(const char* host)
 bool client::
 receiveMessage()
 {
+
 	boost::system::error_code error;
-	char buf[MSGSIZE];
-	char ret = false;
+	char buf[MSGSIZE+1];
+	bool ret = false, somethingWritten = false;	//somethingWritten sera true si recibe algo
 	size_t len = 0;
-	cout << "Receiving Message" << endl;
+	cout << "Receiving Message..." << endl;
 	boost::timer::cpu_timer t;
 	t.start();
 	boost::timer::cpu_times pastTime = t.elapsed();
 	double elapsedSeconds = 0.0;
-	messageFromServer = "";
-	do
+	FILE *messageFromServer = fopen("serverMessage.txt", "wb+");
+	boost::timer::cpu_times currentTime;
+	if (messageFromServer != NULL)
 	{
-		len = socket_forClient->read_some(boost::asio::buffer(buf), error);
-		if (!error)	//si no hubo error guarda la parte recibida del mensaje y vacia el buffer
+		do
 		{
-			if (len < MSGSIZE)
-			{
-				buf[len] = '\0';
-				messageFromServer += buf;
-			}
-			else if (len == MSGSIZE)
-			{
-				char charBuf = buf[len-1];	//cuando len vale MSGSIZE no se puede escribir en buf[len]
-				buf[len - 1] = '\0';
-				messageFromServer += buf;
-				messageFromServer += charBuf; 
-			}
-			clearBuf(buf, MSGSIZE);		//vacia el buffer
-		}
-	} while (error.value() == WSAEWOULDBLOCK);
+			len = socket_forClient->read_some(boost::asio::buffer(buf, MSGSIZE), error);
+			
+			currentTime = t.elapsed();
 
-	if (!error)
-	{
-		if (buf[0] == 'e' && buf[1] == 'x' && buf[2] == 'i' && buf[3] == 't')
+			if (!error)	//si no hubo error guarda la parte recibida del mensaje 
+			{
+				pastTime = currentTime;	//reinicia el contador de tiempo para salir
+				buf[len] = '\0';
+				fputs(buf,messageFromServer);				
+				somethingWritten = true;	//avisa que ya 
+			}
+
+		} while(currentTime.wall - pastTime.wall < 1e9);	//se repite hasta que haya pasado 1 segundo desde que recibio lo ultimo
+
+		if (somethingWritten)
 		{
-			ret = true;
+			cout << endl << "Server says: " << endl;
+			printFileContent(messageFromServer);
 		}
 		else
 		{
-			cout << endl << "Server says: " << messageFromServer.c_str() << endl;
-			//cout << endl << "Server says: " << buf << endl;
+			cout << "Error while trying to connect to server " << error.message() << endl;
+			ret = true;
 		}
+		fclose(messageFromServer);
 	}
 	else
 	{
-		cout << "Error while trying to connect to server " << error.message() << endl;
+		cout << "Couldn´t open file to store server's message" << endl;
 		ret = true;
 	}
 	return ret;
 }
 
 void client::
-clearBuf(char buf[],unsigned int size)
+printFileContent(FILE* file)
 {
-	for (unsigned int i = 0; i < size; i++)
-		buf[i] = '\0';
+	long long int cursor = ftell(file);
+	fseek(file, 0, SEEK_END);
+	long long int fileLen = ftell(file);	//obtiene la longitud del archivo
+	char *message = (char *)malloc((fileLen + 1) * sizeof(char));
+	if (message != NULL)
+	{
+		rewind(file);
+		fread(message, sizeof(char), fileLen, file);
+		message[fileLen] = '\0';
+		cout << message << endl;
+		free(message);
+	}
+	fseek(file, cursor, SEEK_SET);	//devuelve el cursor a su posicion original
 }
+
 
 /*Devuelve true si se comunico con el server, para saber si esperar una respuesta o no*/
 bool client::
